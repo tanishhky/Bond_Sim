@@ -1,9 +1,22 @@
 # Bond_Sim
 
-Bottom-up simulator for the full history of US Treasury issuance: reconstructs
-ongoing debt stock and ongoing interest payments from individual bond-level
-cash flow schedules, and stress-tests the outstanding stock against simulated
-future rate paths.
+**Central question:** how likely is the US actually hitting a sovereign-debt
+doom loop (debt growth pushes rates up, higher rates push debt service and
+future debt growth up further), what stops it, who gets hurt if it is not
+stopped (which industries, which normal people), and how long does that hurt
+last?
+
+Bond_Sim started as a bottom-up simulator of US Treasury issuance
+(bond-level cash flow schedules, reconstructed ongoing debt stock and
+interest payments) and is being extended into the engine behind that
+thesis: a controlled Monte Carlo where the discount rate is not handed in
+from outside, it is a feedback function of the simulated debt trajectory
+itself; correlated shocks to rate-sensitive industries and employment are
+baked into every path instead of bolted on after; and a menu of policy
+responses, including a no-layoff mandate, are run through the identical
+engine so their costs and benefits are actually comparable. The target
+output is a real research paper: real data, explicit assumptions, honest
+uncertainty, not a demo.
 
 ## Core design
 
@@ -12,10 +25,10 @@ calendar axis (not periods-since-issuance) so cash flows can be summed across
 bonds at any given date.
 
 **Per-bond inputs (length N, one row per issue):**
-- `issue_period[i]` — calendar period the bond was auctioned
-- `T[i]` — original maturity length in years
-- `C[i]` — coupon rate set at that bond's own auction (fixed forever)
-- `F[i]` — face value issued
+- `issue_period[i]`: calendar period the bond was auctioned
+- `T[i]`: original maturity length in years
+- `C[i]`: coupon rate set at that bond's own auction (fixed forever)
+- `F[i]`: face value issued
 
 **Cash flow matrix, shape (N bonds, M calendar periods), built via broadcasting:**
 - `Active[i,t] = (t > issue_period[i]) & (t <= maturity_period[i])`
@@ -24,55 +37,144 @@ bonds at any given date.
 - `Outstanding[i,t] = (t >= issue_period[i]) & (t < maturity_period[i])`, times `F[i]`
 
 Column sums give the aggregate series:
-- `Outstanding[:, t].sum()` — total ongoing debt at date t (stock)
-- `CouponFlow[:, t].sum()` — total ongoing interest payment at date t (flow, excludes principal)
-- `CouponFlow[:, t].sum() + PrincipalFlow[:, t].sum()` — total debt service at date t
+- `Outstanding[:, t].sum()`: total ongoing debt at date t (stock)
+- `CouponFlow[:, t].sum()`: total ongoing interest payment at date t (flow, excludes principal)
+- `CouponFlow[:, t].sum() + PrincipalFlow[:, t].sum()`: total debt service at date t
 
-**Yield impact / sensitivity:** collapse the bond dimension into one future
-cash flow vector, then price it under a scenario matrix of simulated/shocked
-rate paths in a single matmul: `DF_scenarios (K, M) @ TotalFutureCF (M,)`.
-Only expand to a 3D (N, K, M) tensor if per-bond sensitivity attribution is
-needed.
+**Static-scenario sensitivity (Phase 2, the toy warm-up):** collapse the
+bond dimension into one future cash flow vector, then price it under a
+matrix of flat, exogenous what-if rates in a single matmul:
+`DF_scenarios (K, M) @ TotalFutureCF (M,)`. This is mechanics practice, not
+the real rate model, real rates do not stay flat and do not move
+independently of the debt path. The real model is Phase 4 below, where the
+rate is endogenous to the simulation instead of handed in.
 
-## Data source
+## Data sources
 
-Per-auction issue date, maturity date, coupon (interest rate), high yield,
-and amount accepted: `fiscaldata.treasury.gov/datasets/treasury-securities-auctions-data/`.
-T-bills in that dataset carry no coupon (pure discount, single payment at
-maturity) and need a separate branch from the coupon-bond formula above.
+Layered in as each phase actually starts, not pulled all at once:
 
-## Build plan
+- **Treasury auction history** (Phase 3): per-auction issue date, maturity
+  date, coupon, high yield, amount accepted, from
+  `fiscaldata.treasury.gov/datasets/treasury-securities-auctions-data/`.
+  T-bills carry no coupon (pure discount, single payment at maturity) and
+  need a separate branch from the coupon-bond formula above.
+- **Fiscal trajectory** (Phase 4): federal debt held by the public,
+  debt/GDP, deficit/GDP, federal outlays and receipts, real GDP. Likely
+  FRED plus Treasury/OMB historical tables and CBO baseline projections for
+  the forward path. Exact series IDs to confirm once this phase actually
+  starts rather than guessed now.
+- **Sector employment** (Phase 5): employment by industry (construction,
+  real estate, autos, regional banks and small business lending, federal
+  contractors) to fit or calibrate rate sensitivity, most likely BLS/FRED
+  sector series.
+- **Historical crisis recoveries** (Phase 7): NBER recession dates and
+  unemployment-duration series, plus at least one cross-country
+  sovereign-debt-crisis episode (Greece in the 2010s is the obvious modern
+  comparable), as priors for how long a doom-loop-driven downturn actually
+  lasts.
 
-Working entirely in `main.ipynb`, dummy 3-bond toy dataset first, real data
-last. LeetCode-style: each step gets a markdown problem statement (statement,
-constraint, input, expected output) in the notebook, then it's coded by hand
-against that spec, no code written by the assistant unless explicitly asked.
+## Research plan
 
-**Phase 1, cash flow schedule:**
-1. Toy bond inputs: `issue_period`, `T`, `C`, `F` — done
-2. `maturity_period = issue_period + 2*T` — done
-3. Global calendar grid `M = maturity_period.max() + 1`, `periods = arange(M)` — done
-4. `Active[i,t]` mask via broadcasting (`periods[None,:]` vs `issue_period[:,None]`/`maturity_period[:,None]`) — **posed as Problem 1 in `main.ipynb`, not yet solved** (current cell is a placeholder nested loop that always assigns `True`)
-5. `CouponFlow[i,t]` — not started, will be Problem 2 once Problem 1 is solved
-6. `PrincipalFlow[i,t]` — not started, part of Problem 2
-7. `Outstanding[i,t]` — not started, part of Problem 2
-8. Column sums → ongoing debt / ongoing interest payments / total debt service, hand-check against the toy dataset — not started
+Working entirely in `main.ipynb`. LeetCode-style through Phase 3: each step
+gets a markdown problem statement (objective, explanation, constraint,
+input, expected output), Tanishk codes every solution by hand, no code from
+Claude unless explicitly asked. Phase 4 onward is genuine research design,
+not a coding exercise: methodology gets written up and agreed before it
+gets coded.
 
-**Phase 2, yield impact / sensitivity:**
-9. Discount-factor scenario matrix (K rate scenarios × M periods) — not started
-10. Collapse bond dimension into one aggregate future cash flow vector — not started
-11. `DF_scenarios (K,M) @ TotalFutureCF (M,)` for the sensitivity profile — not started
+**Phase 1, cash flow schedule: DONE.**
+Toy 3-bond dataset; `Active`/`CouponFlow`/`PrincipalFlow`/`Outstanding`
+masks; column-summed to ongoing debt stock, interest, and total debt
+service. Problems 1-3 in `main.ipynb`.
 
-**Phase 3, swap dummy for real data:**
-12. Pull Treasury auction history from `fiscaldata.treasury.gov` — not started
-13. Map raw fields onto `issue_period`/`T`/`C`/`F` — not started
-14. Branch for T-bills (no coupon, single discount payment) — not started
+**Phase 2, static-scenario sensitivity: DONE.**
+`DF_scenarios (K,M) @ TotalFutureCF (M,)`, three flat what-if rate
+scenarios (down/base/up) on the toy debt service vector. Problems 4-5.
 
-**Phase 4, tests:**
-15. `pytest` cases pinned to the toy dataset's hand-computed numbers — not started
+**Phase 3, swap dummy for real data: not started.**
+1. Pull Treasury auction history from `fiscaldata.treasury.gov`.
+2. Map raw fields onto `issue_period`/`T`/`C`/`F`.
+3. Branch for T-bills (no coupon, single discount payment).
+4. Re-run Phase 1-2's checks against the real debt stock as a sanity check
+   before building anything new on top of it.
+
+**Phase 4, endogenous doom-loop rate engine: not started, the load-bearing phase.**
+Replace Phase 2's flat exogenous scenarios with a rate that reacts to the
+simulated debt path: each period's yield = a base/neutral rate plus a risk
+premium driven by the fiscal trajectory (debt/GDP, deficit/GDP, interest
+cost/revenue, or similar). Newly issued debt funds that period's deficit
+(interest cost plus a primary-deficit draw), so debt compounds through the
+same function that is pricing it; that compounding is the actual loop, not
+a metaphor. Output is a distribution across many simulated paths: does a
+loop take hold, how fast, how bad.
+
+**Open methodology call, needs a decision before this gets coded:** the
+exact functional form for the risk-premium feedback. Candidates: (a)
+reduced-form, fit a historical or cross-country relationship between
+debt/GDP and term premium; (b) a Reinhart-Rogoff-style threshold
+calibration; (c) a simpler expert-calibrated slope, explicitly labeled as
+an assumption, with a documented sensitivity analysis on that slope.
+Recommend starting with (c), the simplest defensible version, and
+stress-testing how much the thesis's conclusions actually depend on that
+one number, rather than chasing false precision on a parameter nobody can
+estimate cleanly.
+
+**Phase 5, correlated labor and industry shocks: not started.**
+For every simulated path, translate the realized rate/debt trajectory into
+sector-level employment and output impact (construction and real estate,
+autos, small business and regional banks, federal contractors exposed to
+spending cuts), via fitted historical sensitivities where FRED/BLS data
+supports it, literature-calibrated elasticities where it does not,
+documented either way. Correlated on purpose: a real doom-loop scenario
+hits a rate shock, tighter credit, government spending cuts, and weaker
+consumer demand together, drawing sector shocks independently would
+understate how bad and how widespread it actually gets. Output is a
+sector-by-sector impact series per path, not one aggregate number, so "who
+gets hurt" is actually answerable.
+
+**Phase 6, policy counterfactuals: not started.**
+Re-run the identical controlled MC engine, same underlying shock draws,
+under a menu of policy responses so differences reflect the policy and not
+randomness:
+1. Status quo, no intervention (the baseline doom-loop path).
+2. No-layoff mandate during a defined stress window: model the intended
+   effect (unemployment suppressed) against the likely offsetting cost
+   (business failures, hiring frozen elsewhere, possible
+   labor-hoarding-driven inflation).
+3. Fiscal consolidation / austerity: spending cuts and/or tax increases
+   that shrink the primary deficit directly.
+4. Debt monetization: the Fed absorbs issuance and inflates away the real
+   debt burden, traded off against the inflation/currency cost.
+5. Growth-led consolidation: higher trend GDP growth (productivity,
+   immigration) outrunning the debt, the best case and the hardest to
+   engineer on purpose.
+
+**Open methodology call:** exactly how to mechanically model the no-layoff
+mandate, a hard floor on sector employment with a cost penalty elsewhere,
+or a probabilistic dampener on layoff propensity. Judgment call, not
+something derivable from data alone.
+
+**Phase 7, recovery duration: not started.**
+Calibrate how fast unemployment and output actually mean-revert after a
+downturn using historical analogues (the 2008 recovery, the Volcker-era
+disinflation recession, Greece in the 2010s) as priors, apply to every
+simulated and policy path to answer "how long does the suffering last," not
+just "how bad does it get."
+
+**Phase 8, tests: not started.**
+`pytest` cases pinned to the toy dataset's hand-computed numbers (existing
+scope), plus deterministic unit tests on the Phase 4-6 mechanics (the
+feedback loop's arithmetic, the policy branching logic), not on stochastic
+MC outputs directly.
+
+**Phase 9, writeup: not started.**
+The actual paper. Real data throughout, every assumption from Phases 4-6
+listed explicitly and kept separate from genuine findings, figures, in-repo
+`paper/` following the same pattern as RateWalk's working paper. No SSRN
+claim or submission until it is actually submitted.
 
 ## Status
 
-Phase 1 in progress. `main.ipynb` has the toy dataset, `N`, `maturity_period`,
-`M`/`periods` built and verified by hand, and Problem 1 (`Active` mask) posed
-and awaiting a correct broadcasted (non-loop) solution.
+Phase 1 and Phase 2 are done on the toy dataset (Problems 1-5 in
+`main.ipynb`, all executing end to end, outputs verified against
+hand-computed values). Phase 3 (real Treasury data) is next.
