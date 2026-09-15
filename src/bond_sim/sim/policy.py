@@ -126,8 +126,34 @@ class GrowthLed(Policy):
         return g + self.cfg.growth_uplift_pct
 
 
-def policy_from_name(name: str, cfg: PolicyConfig) -> Policy:
+class Delayed(Policy):
+    """Run ``inner`` only from quarter ``start`` on: the "act now vs act later"
+    comparison. Before ``start`` every hook is the status quo."""
+
+    def __init__(self, inner: Policy, start: int):
+        super().__init__(inner.cfg)
+        self.inner, self.start = inner, start
+        self.name = f"{inner.name}@q{start}"
+
+    def _t(self, t: int) -> int:
+        return t - self.start
+
+    def primary_balance(self, t, pb, state):
+        return self.inner.primary_balance(self._t(t), pb, state) if t >= self.start else pb
+
+    def growth(self, t, g, state):
+        return self.inner.growth(self._t(t), g, state) if t >= self.start else g
+
+    def unemployment_change(self, t, d_u, state):
+        return self.inner.unemployment_change(self._t(t), d_u, state) if t >= self.start else d_u
+
+    def issuance_yield(self, t, y, y_base, state):
+        return self.inner.issuance_yield(self._t(t), y, y_base, state) if t >= self.start else y
+
+
+def policy_from_name(name: str, cfg: PolicyConfig, start_quarter: int = 0) -> Policy:
     table = {p.name: p for p in (StatusQuo, NoLayoffMandate, Austerity, Monetization, GrowthLed)}
     if name not in table:
         raise KeyError(f"unknown policy {name!r}; choose from {sorted(table)}")
-    return table[name](cfg)
+    p = table[name](cfg)
+    return Delayed(p, start_quarter) if start_quarter > 0 else p

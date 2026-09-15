@@ -53,7 +53,8 @@ class MacroSpec:
     unrate: str = "UNRATE"
 
 
-def build_quarterly_state(panel_wide: pd.DataFrame, spec: MacroSpec = MacroSpec()) -> pd.DataFrame:
+def build_quarterly_state(panel_wide: pd.DataFrame, spec: MacroSpec = MacroSpec(),
+                          interest_monthly: Optional[pd.Series] = None) -> pd.DataFrame:
     """Monthly panel (date x series) -> quarterly frame with VARS columns plus
     the differenced helpers (d_r10, d_u) the labor model uses.
 
@@ -61,15 +62,26 @@ def build_quarterly_state(panel_wide: pd.DataFrame, spec: MacroSpec = MacroSpec(
     seasonally adjusted (April is a surplus month every year), so the primary
     balance is a trailing-four-quarter ratio: sum of (surplus + interest) over
     the last four quarters divided by GDP over the same four quarters.
+
+    ``interest_monthly``: monthly interest in $ millions (the bond book's
+    bottom-up cash interest on marketable debt). When given it replaces the
+    NIPA interest series, so the primary balance, the effective rate, and
+    the simulator all use the same interest concept. NIPA "interest payments"
+    is a gross figure and overstates the primary balance by about a point of
+    GDP.
     """
     p = panel_wide.copy()
+    if interest_monthly is not None:
+        interest_q = interest_monthly.resample("QS").sum(min_count=3) / 1e3          # $mm -> $bn per quarter
+    else:
+        interest_q = p[spec.interest].resample("QS").first() / 4.0                  # SAAR -> quarterly $bn
     q = pd.DataFrame({
         "r10": p[spec.r10].resample("QS").mean(),
         "r3m": p[spec.r3m].resample("QS").mean(),
         "u": p[spec.unrate].resample("QS").mean(),
         "gdp": p[spec.gdp].resample("QS").first(),                            # SAAR $bn
         "surplus_q": p[spec.deficit].resample("QS").sum(min_count=3) / 1e3,   # $mm -> $bn, quarter total
-        "interest_q": p[spec.interest].resample("QS").first() / 4.0,          # SAAR -> quarterly $bn
+        "interest_q": interest_q,
     })
     q["g_nom"] = 100.0 * ((q["gdp"] / q["gdp"].shift(1)) ** 4 - 1.0)        # annualized q/q
     primary_q = q["surplus_q"] + q["interest_q"]
@@ -93,9 +105,17 @@ class MacroVAR:
         self.sample: Optional[pd.DataFrame] = None
 
     # ── estimation ──────────────────────────────────────────────────────────
+    # Unemployment enters the VAR in logs: a linear model on the level produced
+    # sub-1% unemployment on 20-25% of 30-year paths (never observed; the US
+    # minimum is 2.5%), which the admissibility filter then rejected, biasing the
+    # surviving sample. log(u) keeps the floor natural. Callers see levels.
+    LOG_VARS = ("u",)
+
     def fit(self, q: pd.DataFrame, start: Optional[str] = None) -> "MacroVAR":
         from statsmodels.tsa.api import VAR
         y = q[list(VARS)].replace([np.inf, -np.inf], np.nan).dropna()
+        for v in self.LOG_VARS:
+            y[v] = np.log(y[v])
         if start:
             y = y[y.index >= pd.Timestamp(start)]
         with warnings.catch_warnings():
@@ -133,21 +153,25 @@ class MacroVAR:
 
     # ── long-run means: the one place a view about levels is allowed ───────
     def long_run_means(self) -> pd.Series:
-        """Unconditional means implied by the intercept: mu = (I - sum_l A_l)^-1 c."""
+        """Unconditional means implied by the intercept: mu = (I - sum_l A_l)^-1 c,
+        reported in levels (log variables exponentiated)."""
         V = len(VARS)
         A = self.coefs.sum(axis=0)
-        return pd.Series(np.linalg.solve(np.eye(V) - A, self.intercept), index=VARS)
+        mu = pd.Series(np.linalg.solve(np.eye(V) - A, self.intercept), index=VARS)
+        for v in self.LOG_VARS:
+            mu[v] = float(np.exp(mu[v]))
+        return mu
 
     def set_long_run_means(self, means: Dict[str, float]) -> "MacroVAR":
         """Shift the intercept so the named variables' unconditional means equal
-        ``means`` while every dynamic coefficient and the shock covariance stay
-        estimated. Anchors are explicit views (P-03 primary balance, P-13
+        ``means`` (levels) while every dynamic coefficient and the shock covariance
+        stay estimated. Anchors are explicit views (P-03 primary balance, P-13
         long-run 10y, P-14 natural rate) and are logged as such."""
         V = len(VARS)
         A = self.coefs.sum(axis=0)
-        mu = self.long_run_means().to_numpy()
+        mu = np.linalg.solve(np.eye(V) - A, self.intercept)
         for k, v in means.items():
-            mu[self.index_of(k)] = float(v)
+            mu[self.index_of(k)] = float(np.log(v)) if k in self.LOG_VARS else float(v)
         self.intercept = (np.eye(V) - A) @ mu
         obs.event(channel="sim", kind="macro_var.long_run_means", means=dict(zip(VARS, np.round(mu, 3).tolist())))
         return self

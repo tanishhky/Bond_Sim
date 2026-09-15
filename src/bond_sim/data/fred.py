@@ -104,6 +104,33 @@ SERIES: Dict[str, SeriesSpec] = {s.id: s for s in [
     SeriesSpec("USTRADE", "All Employees, Retail Trade", "M", "Thous.", "labor", 10),
     SeriesSpec("MANEMP", "All Employees, Manufacturing", "M", "Thous.", "labor", 10),
     SeriesSpec("USGOVT", "All Employees, Government", "M", "Thous.", "labor", 10),
+    # ── behavioral blocks for the latent-state model (verified 2026-09-15) ──
+    # consumer (BEA personal income release ~30 days; G.19 credit ~40 days; UMich final ~0-3 days)
+    SeriesSpec("PCE", "Personal Consumption Expenditures (SAAR)", "M", "Bil. of $", "consumer", 32),
+    SeriesSpec("DSPIC96", "Real Disposable Personal Income (SAAR)", "M", "Bil. of Chn. 2017 $", "consumer", 32),
+    SeriesSpec("PSAVERT", "Personal Saving Rate", "M", "%", "consumer", 32),
+    SeriesSpec("TOTALSL", "Total Consumer Credit Owned and Securitized", "M", "Mil. of $", "consumer", 40),
+    SeriesSpec("REVOLSL", "Revolving Consumer Credit Owned and Securitized", "M", "Mil. of $", "consumer", 40),
+    SeriesSpec("UMCSENT", "University of Michigan Consumer Sentiment (NSA)", "M", "Index 1966:Q1=100", "consumer", 5),
+    # corporate / activity (BEA advance ~30 days; profits ~60; G.17 ~15; H.8 ~10; Z.1 ~75)
+    SeriesSpec("PNFI", "Private Nonresidential Fixed Investment (SAAR)", "Q", "Bil. of $", "corporate", 35),
+    SeriesSpec("CP", "Corporate Profits After Tax (SAAR)", "Q", "Bil. of $", "corporate", 65),
+    SeriesSpec("BUSLOANS", "Commercial and Industrial Loans, All Commercial Banks", "M", "Bil. of $", "corporate", 12),
+    SeriesSpec("INDPRO", "Industrial Production: Total Index", "M", "Index 2017=100", "corporate", 18),
+    SeriesSpec("TCU", "Capacity Utilization: Total Index", "M", "%", "corporate", 18),
+    SeriesSpec("NCBDBIQ027S", "Nonfinancial Corporate Business: Debt Securities, Liability (NSA)", "Q", "Mil. of $", "corporate", 80),
+    # financial conditions (daily/weekly market data; SLOOS quarterly ~30 days)
+    SeriesSpec("NFCI", "Chicago Fed National Financial Conditions Index", "W", "Index", "financial", 6),
+    SeriesSpec("BAA10Y", "Moody's Baa Corporate Yield Relative to 10-Year Treasury", "D", "%", "financial", 2),
+    SeriesSpec("VIXCLS", "CBOE Volatility Index: VIX", "D", "Index", "financial", 2),
+    SeriesSpec("T10Y2Y", "10-Year Minus 2-Year Treasury Constant Maturity", "D", "%", "financial", 2),
+    SeriesSpec("DRTSCILM", "Net Pct of Banks Tightening Standards for C&I Loans to Large Firms (SLOOS)", "Q", "%", "financial", 35),
+    # prices (BLS CPI ~12-15 days; BEA PCE price ~30 days; Cleveland Fed median CPI same day as CPI)
+    SeriesSpec("CPILFESL", "CPI-U: All Items Less Food and Energy (SA)", "M", "Index 1982-1984=100", "prices", 20),
+    SeriesSpec("PCEPI", "PCE Chain-type Price Index (SA)", "M", "Index 2017=100", "prices", 32),
+    SeriesSpec("MEDCPIM158SFRBCLE", "Median CPI (annualized pct change)", "M", "% Chg. at Annual Rate", "prices", 20),
+    # holders
+    SeriesSpec("FDHBPIN", "Federal Debt Held by Private Investors", "Q", "Bil. of $", "holders", 80),
 ]}
 
 

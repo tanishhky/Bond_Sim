@@ -47,8 +47,24 @@ doomloop:
     anchor_debt_gdp_pct: 100.0
     threshold_debt_gdp_pct: 130.0 #                              TODO(Tanishk) P-02
     threshold_extra_bps_per_pct: 6.0
-  loop_trigger_debt_gdp_pct: 150.0        #                      TODO(Tanishk) P-04
-  loop_trigger_interest_rev_pct: 30.0     #                      TODO(Tanishk) P-04
+  trigger_persistence_months: 12  # identity trigger: pb* above feasible pb for this long              P-04
+  feasible_benchmark: envelope    # envelope | reaction | min                                          P-04
+  feasible_quantile: 0.9          # envelope = this quantile of historical pb (1.0 = best quarter ever)  P-04
+  trigger_require_r_gt_g: true    # breach counts only with r > g (explosive), not merely a rising ratio P-04
+  trigger_growth_smoothing_months: 12   # growth as a trailing mean, like-for-like with the trailing effective rate  P-04
+  loop_trigger_debt_gdp_pct: 150.0        # legacy threshold trigger, comparison only
+  loop_trigger_interest_rev_pct: 30.0     # legacy threshold trigger, comparison only
+
+states:
+  start: "1990-01-01"             # common sample of all blocks (VIX, SLOOS begin 1990)
+  n_states: null                  # null -> BIC over candidates                          P-17
+  candidates: [2, 3, 4]
+  prior_strength: 2.0             # sticky Dirichlet prior on the transition matrix       P-17
+  premium_to_financial: null      # null -> Baa-spread loading                            P-16
+  winsor_sd: 3.5                  # clip factors for estimation; 2020Q2 sits at -8 to -9  P-18
+  min_state_occupancy: 8          # a state with fewer quarters is an outlier, not a regime  P-18
+  hazard_beta: null               # null -> estimated (>= 0); the sample's 3 stress entries cannot identify it   P-19
+  seed: 0
 
 labor:
   sectors: [USCONS, CES5553000001, CES3133600101, CES5552200001, USFIRE, CES9091000001, USPBS, USTRADE, MANEMP]

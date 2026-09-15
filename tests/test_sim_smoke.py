@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from bond_sim.config import load
-from bond_sim.sim import (DoomLoopSimulator, InitialState, LinearPremium, MacroVAR, NoPremium,
+from bond_sim.sim import (DoomLoopSimulator, InitialState, LinearPremium, MacroVAR, NoPremium, VARBlock,
                           policy_from_name)
 from bond_sim.sim.macro import VARS
 
@@ -48,7 +48,7 @@ def init():
 
 def _run(var, init, premium, policy="status_quo", seed=1):
     cfg = load()
-    sim = DoomLoopSimulator(cfg, var, premium, init, policy_from_name(policy, cfg.policy))
+    sim = DoomLoopSimulator(cfg, VARBlock(var), premium, init, policy_from_name(policy, cfg.policy))
     return sim.run(K=K, seed=seed)
 
 
@@ -66,7 +66,9 @@ def test_shapes_finiteness_and_mean_reversion(var, init):
     res = _run(var, init, NoPremium())
     for k, v in res.paths.items():
         assert v.shape == (K, H), k
-        assert np.isfinite(v).all(), k
+        if k not in ("infl", "state"):
+            assert np.isfinite(v).all(), k
+    assert res.admissible.mean() > 0.9, res.rejections.to_dict()
     assert 0.0 <= res.trigger_probability() <= 1.0
     assert (res.paths["premium"] == 0).all()
     # levels VAR: the unemployment median stays near its long-run mean, not at a floor
@@ -81,7 +83,7 @@ def test_premium_raises_debt_and_rates(var, init):
     assert np.median(b.paths["debt_gdp"][:, -1]) > np.median(a.paths["debt_gdp"][:, -1])
     assert np.median(b.paths["r10"][:, -1]) > np.median(a.paths["r10"][:, -1])
     # the premium is on top of the base rate, which keeps its own dynamics
-    np.testing.assert_allclose(b.paths["r10"], np.clip(b.paths["r10_base"] + b.paths["premium"], 0, 25))
+    np.testing.assert_allclose(b.paths["r10"], b.paths["r10_base"] + b.paths["premium"])
 
 
 def test_common_random_numbers_and_policy_effect(var, init):

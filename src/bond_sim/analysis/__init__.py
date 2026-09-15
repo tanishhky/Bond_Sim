@@ -7,5 +7,7 @@
 """
 from .correlation import CorrelationAnalyzer, PairResult
 from .regimes import RegimeDetector, adjusted_rand_index
+from .factors import BlockFactors, BLOCKS, TARGETS, build_block_panel
 
-__all__ = ["CorrelationAnalyzer", "PairResult", "RegimeDetector", "adjusted_rand_index"]
+__all__ = ["CorrelationAnalyzer", "PairResult", "RegimeDetector", "adjusted_rand_index",
+           "BlockFactors", "BLOCKS", "TARGETS", "build_block_panel"]

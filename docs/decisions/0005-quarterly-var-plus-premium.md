@@ -59,6 +59,14 @@ mean reversion to the sample means, which are printed at run time and can
 be overridden as explicit anchors (P-03, P-13, P-14). The companion-matrix
 eigenvalue is logged to confirm stability.
 
+**Unemployment in logs (added after the admissibility runs).** On the
+level of unemployment, the linear VAR produced sub-1% unemployment on
+20-25% of 30-year paths (the US minimum on record is 2.5%), which the
+admissibility filter then rejected, biasing the surviving sample toward
+weaker economies. The VAR now carries log(u) internally and reports levels;
+the floor is natural and no path is lost to it. The state block does the
+same through a log transform on the labor block's unemployment series.
+
 **Premium transmission.** With base rates in levels, adding the premium into
 the r10 equation would let the VAR mean-revert it away, silently assuming
 markets forgive debt. Instead the market 10y is base + premium, and the

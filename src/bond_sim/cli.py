@@ -148,11 +148,8 @@ def _quarterly_changes(monthly: np.ndarray, x0: float) -> np.ndarray:
 
 
 def _diagnostics(res) -> dict:
-    d = {}
-    for k, v in res.paths.items():
-        d[f"nonfinite_{k}"] = int((~np.isfinite(v)).sum())
-    d["paths_at_rate_ceiling"] = float((res.paths["r10"][:, -1] >= 24.9).mean())
-    d["paths_at_u_ceiling"] = float((res.paths["u"][:, -1] >= 29.9).mean())
+    d = {f"rejected_{k}": int(v) for k, v in res.rejections.items()}
+    d["admissible_share"] = float(res.admissible.mean())
     return d
 
 
@@ -160,7 +157,8 @@ def cmd_simulate(cfg, args):
     from .data import load_auctions, load_mspd_summary, load_macro_panel
     from .data.fred import panel_wide
     from .engine.book import BondBook
-    from .sim import DoomLoopSimulator, LaborModel, MacroVAR, RecoveryModel, premium_from_config, policy_from_name
+    from .sim import (DoomLoopSimulator, LaborModel, MacroVAR, RecoveryModel, VARBlock, premium_from_config,
+                      policy_from_name)
     from .sim.macro import build_quarterly_state
     from .sim.setup import build_initial_state
     as_of = _as_of(cfg, args.as_of)
@@ -205,11 +203,12 @@ def cmd_simulate(cfg, args):
     K = args.paths or cfg.sim.n_paths
     rng = np.random.default_rng(cfg.sim.seed)
     HQ = (len(init.legacy_interest_mm) + 2) // 3
-    shocks = var.draw_shocks(K, HQ, rng)                     # common random numbers across policies
+    block = VARBlock(var)
+    draws = block.prepare(K, HQ, rng)                        # common random numbers across policies
     rows, diag = [], {}
     for name in (args.policies or cfg.policy.menu):
-        sim = DoomLoopSimulator(cfg, var, premium, init, policy_from_name(name, cfg.policy))
-        res = sim.run(K=K, shocks=shocks, start=as_of + pd.DateOffset(months=1))
+        sim = DoomLoopSimulator(cfg, VARBlock(var), premium, init, policy_from_name(name, cfg.policy))
+        res = sim.run(K=K, draws=draws, start=as_of + pd.DateOffset(months=1))
         for v in SIM_PATH_VARS:
             res.quantiles(v).to_csv(out / f"sim_{name}_{v}.csv")
         np.save(out / f"sim_{name}_trigger_month.npy", res.trigger_month)
@@ -237,8 +236,7 @@ def cmd_simulate(cfg, args):
     cols = ["P(trigger)", "median_years_to_trigger", "median_end_debt_gdp", "median_end_r10", "median_end_u",
             "median_end_interest_12m_gdp", "median_recovery_half_life_months", "worst_sector_median_trough"]
     print("\n" + summary[cols].round(3).to_string())
-    bad = {k: v for k, v in diag.items() if any(n > 0 for kk, n in v.items() if kk.startswith("nonfinite"))}
-    print(f"\ndiagnostics: {'all paths finite' if not bad else bad}")
+    print(f"\nadmissibility: {diag}")
     print(f"artifacts: {out}")
 
 
