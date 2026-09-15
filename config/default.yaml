@@ -1,0 +1,69 @@
+# Bond_Sim default configuration.
+# Schema and per-field documentation: src/bond_sim/config.py
+# Parameters awaiting a human decision are tagged TODO(Tanishk) there and
+# enumerated in PARAMETERS.md with their thesis impact.
+
+data:
+  history_start: "1980-01-01"     # MTS monthly fiscal data begins 1980-10
+  as_of: null                     # null -> today. Every loader filters on this date.
+  vintages: true                  # full ALFRED vintages, decision 0002
+  cache: true
+
+calendar:
+  freq: M                         # monthly grid, decision 0001
+  horizon_years: 30               # forward simulation window
+
+book:
+  include_tips: true
+  include_frn: true
+  include_cmb: true
+  coupon_months: 6
+  face_units: 1000000.0           # $ millions (PyYAML reads "1.0e6" as a string; keep the literal)
+  validate_against_mspd: true
+
+correlation:
+  rolling_window_months: 60
+  max_lag_months: 24
+  regime_method: quantile         # quantile | hmm
+  n_regimes: 3
+  fdr_alpha: 0.05
+  transform: diff                 # diff | level | pct
+
+sim:
+  n_paths: 5000
+  seed: 42
+  dt_months: 1
+  max_rate_pct: 25.0
+
+doomloop:
+  var_start: "1985-01-01"
+  var_max_lag: 4
+  pb_anchor_pct_gdp: null         # null -> VAR sample mean; long-run primary balance      TODO(Tanishk) P-03
+  r10_anchor_pct: null            # null -> VAR sample mean; long-run 10y yield            TODO(Tanishk) P-13
+  u_anchor_pct: null              # null -> VAR sample mean; natural rate of unemployment  TODO(Tanishk) P-14
+  risk_premium:
+    model: linear                 # linear | threshold | none   TODO(Tanishk) P-01
+    bps_per_pct_debt_gdp: 2.0     # placeholder                  TODO(Tanishk) P-01
+    anchor_debt_gdp_pct: 100.0
+    threshold_debt_gdp_pct: 130.0 #                              TODO(Tanishk) P-02
+    threshold_extra_bps_per_pct: 6.0
+  loop_trigger_debt_gdp_pct: 150.0        #                      TODO(Tanishk) P-04
+  loop_trigger_interest_rev_pct: 30.0     #                      TODO(Tanishk) P-04
+
+labor:
+  sectors: [USCONS, CES5553000001, CES3133600101, CES5552200001, USFIRE, CES9091000001, USPBS, USTRADE, MANEMP]
+  beta_source: estimated          # estimated | literature       P-05
+  shock_lag_months: 6
+
+policy:
+  menu: [status_quo, no_layoff_mandate, austerity, monetization, growth_led]
+  stress_window_months: 24        #                              TODO(Tanishk) P-06
+  no_layoff_floor_pct: 0.0        #                              TODO(Tanishk) P-06
+  no_layoff_cost_mechanism: floor_with_penalty   # | propensity_dampener   TODO(Tanishk) P-06
+  austerity_primary_balance_pct_gdp: 2.0         #               TODO(Tanishk) P-07
+  monetization_share: 0.5                        #               TODO(Tanishk) P-08
+  growth_uplift_pct: 0.5                         #               TODO(Tanishk) P-09
+
+recovery:
+  half_life_months_prior: 30.0    #                              P-10 (estimated from episodes)
+  episodes: [gfc_2008, volcker_1981, covid_2020]

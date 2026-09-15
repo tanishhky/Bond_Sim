@@ -4,16 +4,29 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bond_sim"
-version = "0.1.0"
-description = "Bottom-up simulator of US Treasury issuance history: debt stock, interest payments, and rate-path sensitivity."
+version = "0.2.0"
+description = "US sovereign-debt doom-loop research engine: bottom-up Treasury cash flows, point-in-time macro data, correlation/regime analysis, controlled Monte Carlo with policy counterfactuals."
 requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.24",
     "pandas>=2.0",
+    "scipy>=1.10",
+    "statsmodels>=0.14",
+    "requests>=2.31",
+    "pyyaml>=6.0",
+    "pyarrow>=14.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "ipykernel>=6.0", "nbconvert>=7.0", "nbformat>=5.0", "matplotlib>=3.7"]
+regimes = ["hmmlearn>=0.3"]
+
+[project.scripts]
+bond_sim = "bond_sim.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

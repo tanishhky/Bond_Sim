@@ -7,3 +7,6 @@ __pycache__/
 .DS_Store
 runs/
 *.ipynb_checkpoints/
+data_cache/
+runs/
+*.parquet
