@@ -40,9 +40,10 @@ notebooks are generated from `scripts/build_notebooks.py` so they never
 drift from the package API; the mathematics is in `docs/math.md`.
 
 The CLI (`bond_sim fetch|book|analyze|simulate`) remains as an optional
-batch wrapper around the same package. `main.ipynb` is the original
-hand-coded warm-up (Problems 1-5 on a toy 3-bond book); `tests/test_toy_book.py`
-pins its numbers so the engine can never drift from what was hand-verified.
+batch wrapper around the same package. The original hand-coded warm-up
+(Problems 1-5 on a toy 3-bond book, superseded by notebooks 01-02) is gone
+from the working tree; `tests/test_toy_book.py` still pins its numbers so
+the engine can never drift from what was hand-verified.
 
 ## Architecture
 

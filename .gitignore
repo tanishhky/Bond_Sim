@@ -8,5 +8,4 @@ __pycache__/
 runs/
 *.ipynb_checkpoints/
 data_cache/
-runs/
 *.parquet

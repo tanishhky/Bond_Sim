@@ -1,5 +1,5 @@
-"""Problems 1-5 from main.ipynb, pinned. If any of these move, the engine no
-longer computes what the notebook hand-verified."""
+"""Problems 1-5 from the original hand-coded toy notebook, pinned. If any of
+these move, the engine no longer computes what was hand-verified."""
 import numpy as np
 
 from bond_sim.engine import BondBook, flat_scenario_factors, present_value
