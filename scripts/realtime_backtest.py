@@ -38,7 +38,7 @@ def main():
     dl = cfg.doomloop
     which = sys.argv[3] if len(sys.argv) > 3 else dl.feasible_benchmark
     suffix = "" if which == dl.feasible_benchmark else f"_{which}"
-    min_obs = 2 if which == "envelope" else 40
+    min_obs = 40 if which in ("reaction", "min") else 2      # the reaction fit needs a sample; envelope/actual do not
     dates = pd.date_range(START, END, freq="QS")
     t0 = time.time()
     n = [0]
@@ -52,7 +52,7 @@ def main():
     rt = evaluate_history_realtime(history_fn, dates, n_quarters=4, which=which,
                                    require_r_gt_g=dl.trigger_require_r_gt_g,
                                    growth_smoothing_quarters=max(dl.trigger_growth_smoothing_months // 3, 1),
-                                   quantile=dl.feasible_quantile, fit_reaction=(which != "envelope"), min_obs=min_obs)
+                                   quantile=dl.feasible_quantile, fit_reaction=(which in ("reaction", "min")), min_obs=min_obs)
     H_final, feas_final, h_final = history_sustainability(load_context(dates[-1]), n_quarters=4, which=which)
     cmp = compare_realtime_final(rt, H_final)
 

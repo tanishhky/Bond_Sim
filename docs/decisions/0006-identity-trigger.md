@@ -30,6 +30,18 @@ is.
    beyond which no historically observed response stabilizes the ratio,
    once the premium makes `r` a function of `d`.
 
+**⚠️ Benchmark choice, open (real-time backtest, 2026-09-17, see
+`steelman-log.md` 0002 entry and `docs/realtime_trigger_backtest*.md`).**
+Evaluated in real time on vintage data, the envelope flags 25% of quarters
+while today's vintage flags 0% (its level is set by the 2000 surplus), the
+reaction function is vintage-robust but fires through the 1996-2000
+surpluses, and a third benchmark added the same day, the actual trailing
+primary balance (`which="actual"` in `evaluate_history`, "explosive under
+current policy"), is vintage-robust over 1986-2026 and fires only in
+1986-1994 and 2009-2010. Recommendation on the table: `actual` as default,
+`reaction` for the debt limit, `envelope` as a sensitivity. `evaluate_paths`
+still needs the `actual` branch before the simulator can use it.
+
 **Derivatives.** The first difference is decomposed into snowball, primary,
 and stock-flow residual every period. The second difference is decomposed
 the same way to say what is accelerating the ratio. The third difference is

@@ -254,7 +254,13 @@ def evaluate_history(q: pd.DataFrame, feasible: FeasiblePB, n_quarters: int = 4,
     d_lag = q["d"].shift(1)
     dec["pb_star"] = stabilizing_primary_balance(d_lag, q["r_eff"], g_s)
     dec["g_star"] = stabilizing_growth(d_lag, q["r_eff"], q["pb"])
-    dec["feasible"] = feasible.evaluate(d_lag.to_numpy(), q["u"].to_numpy() if "u" in q else None, which=which)
+    if which == "actual":
+        # the current stance itself: trailing primary balance over the same window as
+        # growth, so the breach reads "the ratio is on an explosive path under current
+        # policy" (Bohn's test in trigger form), with no fitted or envelope benchmark
+        dec["feasible"] = q["pb"].rolling(growth_smoothing_quarters, min_periods=1).mean()
+    else:
+        dec["feasible"] = feasible.evaluate(d_lag.to_numpy(), q["u"].to_numpy() if "u" in q else None, which=which)
     dec["gap"] = dec["pb_star"] - dec["feasible"]
     dec["breach"] = dec["gap"] > 0
     if require_r_gt_g:
