@@ -63,4 +63,9 @@ expanding window), reported next to the final-vintage table.
 `notebook.realtime_history_sustainability(quarter_starts)` which rebuilds the
 context as of each date. `tests/test_realtime_history.py` proves equality
 under no revisions, no look-ahead, and the hindsight mechanism on synthetic
-data. Running it on real vintages is the open item.
+data. Run on real vintages the same day (`docs/realtime_trigger_backtest.md`):
+hindsight flags 0 quarters, real time flags 41 as-of dates, all 1986-1997,
+and every disagreement is the envelope benchmark's history-dependence (no
+surplus in the visible sample before 1998), not a data revision. The
+vintage question turned out to be a benchmark question; see the 0002 entry
+in `steelman-log.md`.
