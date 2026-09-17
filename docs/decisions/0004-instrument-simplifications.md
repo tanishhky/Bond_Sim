@@ -49,3 +49,15 @@ outstanding by class vs MSPD per-CUSIP outstanding (2001+); monthly
 reconstructed interest vs Fiscal Data interest expense by security type
 (2010+); both reported as level and ratio series with the gaps above called
 out, never hidden.
+
+**⚠️ Needs revision, scoped (steelman review, 2026-09-17, see
+`steelman-log.md`).** "Second-order" holds for scenarios without an inflation
+channel and fails for the monetization counterfactual: TIPS carried at
+nominal face get inflated away as if nominal, which biases monetization toward
+working, by the TIPS face share of marketable debt (several times the 1.2%
+quoted above, which is the accrual over total debt; the validation table's
+0.83 reconciliation says the accrual is ~17% of the TIPS class). Indexed vs
+nominal composition is first-order in the inflation-erosion accounting (BIS
+Papers 65; Furman & Summers 2020). Fix with P-15: accrue TIPS principal on the
+simulated CPI path; until then carve the TIPS share out of the erosion
+mechanics or report it as a bound.

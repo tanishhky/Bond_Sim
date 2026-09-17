@@ -137,6 +137,27 @@ def history_sustainability(ctx: Context, agg: Optional[pd.DataFrame] = None, n_q
     return H, feas, h
 
 
+def realtime_history_sustainability(as_of_dates, config_path=None, n_quarters: int = 4,
+                                    which: Optional[str] = None, quantile: Optional[float] = None):
+    """Real-time counterpart of ``history_sustainability``: rebuilds the context
+    as of each date (vintage macro panel, book through that date), so the
+    trigger, the growth smoothing and the feasible envelope only see what was
+    known then. Slow (one ``load_context`` per date; the FRED panel is disk
+    cached, the book is rebuilt), so run it on quarter starts, not months.
+    Returns (realtime_table, comparison_with_todays_vintage)."""
+    from bond_sim.sim import evaluate_history_realtime, compare_realtime_final
+    cfg = cfgmod.load(config_path)
+    dl = cfg.doomloop
+    rt = evaluate_history_realtime(
+        lambda t: history_frame(load_context(t, config_path)), as_of_dates, n_quarters=n_quarters,
+        which=dl.feasible_benchmark if which is None else which, require_r_gt_g=dl.trigger_require_r_gt_g,
+        growth_smoothing_quarters=max(dl.trigger_growth_smoothing_months // 3, 1),
+        quantile=dl.feasible_quantile if quantile is None else quantile)
+    H_final, _, _ = history_sustainability(load_context(pd.Timestamp(max(as_of_dates)), config_path),
+                                           n_quarters=n_quarters, which=which, quantile=quantile)
+    return rt, compare_realtime_final(rt, H_final)
+
+
 # ── Phases 5-7 ──────────────────────────────────────────────────────────────
 
 def initial_state(ctx: Context, book: BondBook, auctions: pd.DataFrame):

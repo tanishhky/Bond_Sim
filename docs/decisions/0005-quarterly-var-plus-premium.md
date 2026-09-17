@@ -85,3 +85,17 @@ channel separate from the fiscal premium; receipts/GDP for the
 interest/receipts trigger is the last 12 months of MTS receipts over SAAR
 GDP, held fixed over the horizon (P-04). Each is a documented extension
 rather than a hidden assumption.
+
+**⚠️ Needs revision (steelman review, 2026-09-17, see `steelman-log.md`).**
+`rate_transmission` pushes the fiscal premium through coefficients estimated
+on 1985-2026 10y moves, which were monetary-policy and term-premium driven,
+not sovereign-risk driven; the regime being simulated is absent from the
+estimation sample (Lucas critique). The sovereign-risk literature transmits
+through bank balance sheets and credit spreads with non-proportional
+magnitudes (Bocola 2016: +60bp firm financing premia, output -1.4% at peak;
+Corsetti & Dedola 2016). "The empirical content of 'the loop hurts the real
+economy'" is the empirical content of "a Fed hike hurts the real economy",
+relabeled. Fix: state it as an assumption; add a Bocola-calibrated
+credit-channel transmission option reported side by side; note that the VAR
+vs state-block gap is a transmission-channel difference as well as a
+distributional one (the state block uses the Baa loading, P-16).

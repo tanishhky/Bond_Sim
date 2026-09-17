@@ -57,3 +57,16 @@ are shared.
 1990Q1 (VIX and the SLOOS tightening series begin then): ~146 quarters. That
 supports 2-3 latent states with a persistence prior, not a per-block joint
 chain. Results are reported at 2 and 3 states (P-17).
+
+**⚠️ Needs revision (steelman review, 2026-09-17, see `steelman-log.md`).**
+Item 3 above says the stress hazard slope is "estimated on history";
+PARAMETERS.md P-19 says the unrestricted estimate is negative, a >= 0
+restriction is imposed, the channel is off by default, and "three events
+cannot identify a hazard". P-19 is right; fix the wording here and in the
+paper: the loop channel in the state block is a stated prior, currently zero,
+swept in notebook 05 (cf. Conesa & Kehoe 2015 fixing the panic probability
+and calling it arbitrary; Wakimoto 2026 on set-valued regime inference with
+few transitions). Also: rejection is a selection rule, so report "triggered
+and rejected" per scenario alongside admissibility, so P(trigger) is
+bracketed rather than conditional on survival; and state that the stress
+residual bank is 44 quarters.

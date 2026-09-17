@@ -46,3 +46,21 @@ that. Any lead/lag claim whose sample is mostly pre-vintage must say so.
 sufficient for a one-series feed, but it cannot answer "what did the whole
 panel look like on date X" and it hits the same vintage-date cap on daily
 series.
+
+**⚠️ Needs revision (steelman review, 2026-09-17, see `steelman-log.md`).**
+The vintage guard covers the data layer only. `sim/sustainability.py::
+evaluate_history` takes a plain quarterly frame with no `as_of` path, and the
+feasible-pb envelope is fit on the same frame, so the "which quarters would
+have flagged since 1980" table is a final-vintage (hindsight) result, not a
+real-time one. Borio, Disyatat & Juselius (2016) show real-time structural
+balance estimates were systematically optimistic pre-2008, which is exactly a
+feasible-balance-in-real-time problem. Fix: an as-of path for
+`evaluate_history` (frame from `VintageFrame.as_of(t)`, envelope on an
+expanding window), reported next to the final-vintage table.
+*Diagnostic added the same day, opt-in, no defaults changed:*
+`sim.sustainability.evaluate_history_realtime` (pure; takes any
+``history_fn(as_of)``), `compare_realtime_final`, and the wrapper
+`notebook.realtime_history_sustainability(quarter_starts)` which rebuilds the
+context as of each date. `tests/test_realtime_history.py` proves equality
+under no revisions, no look-ahead, and the hindsight mechanism on synthetic
+data. Running it on real vintages is the open item.

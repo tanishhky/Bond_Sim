@@ -43,3 +43,14 @@ compares two different dice rolls.
 **What this does not do yet.** The VAR covariance is constant. If the regime
 analysis finds a market-wide regime, switching the covariance with it is the
 next step (P-12), not a default.
+
+**⚠️ Needs revision (steelman review, 2026-09-17, see `steelman-log.md`).**
+"Switch covariance only if regimes synchronize across pairs" conflates "one
+common latent state exists" (ARI 0.11 says no) with "dependence is
+time-varying" (rolling ranges of 1.3-1.7 say yes). The constant VAR
+covariance is therefore a calm-weighted average that under-generates the
+joint "rates up, growth down, deficit up" move the trigger depends on, i.e. a
+known downward bias on tail co-movement, not a neutral default (Vallarino
+2026; Cole, Neuhann & Ordonez 2016). Minimal fix: re-run the VAR block with a
+covariance estimated on recession or stress-state quarters and report
+P(trigger) under calm, full-sample, and stress covariances.

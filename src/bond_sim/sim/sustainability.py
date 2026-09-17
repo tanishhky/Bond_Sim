@@ -261,3 +261,46 @@ def evaluate_history(q: pd.DataFrame, feasible: FeasiblePB, n_quarters: int = 4,
         dec["breach"] &= (q["r_eff"] - g_s) > 0
     dec["triggered"] = dec["breach"].rolling(n_quarters).sum() >= n_quarters
     return dec
+
+
+def evaluate_history_realtime(history_fn, as_of_dates, n_quarters: int = 4, which: str = "envelope",
+                              require_r_gt_g: bool = True, growth_smoothing_quarters: int = 4,
+                              quantile: float = 1.0, fit_reaction: bool = False) -> pd.DataFrame:
+    """The trigger as it would have read in real time.
+
+    ``history_fn(as_of)`` must return the quarterly frame (d, r_eff, g_nom, pb,
+    u) as it was known on ``as_of`` (vintage data, nothing dated after it). For
+    each date the feasible balance is fit on that frame only (an expanding
+    window, so a surplus that happens later cannot raise the envelope
+    earlier), ``evaluate_history`` runs on it, and the last row is kept. The
+    result is one row per as_of date: what the trigger said *then*.
+
+    ``evaluate_history`` on today's vintage is the hindsight table; this is the
+    real-time one. Decision 0002 claims the former, and the difference between
+    the two is a result the paper should report, not assume away."""
+    rows = []
+    for t in pd.to_datetime(list(as_of_dates)):
+        h = history_fn(t)
+        h = h.loc[h.index <= t]
+        if len(h) < 2:
+            continue
+        feas = FeasiblePB.from_history(h["pb"], h["d"], h["u"] if "u" in h else None,
+                                       quantile=quantile, fit_reaction=fit_reaction)
+        H = evaluate_history(h, feas, n_quarters=n_quarters, which=which, require_r_gt_g=require_r_gt_g,
+                             growth_smoothing_quarters=growth_smoothing_quarters)
+        last = H.iloc[-1]
+        rows.append({"as_of": t, "date": H.index[-1], "n_obs": len(h), "envelope_asof": feas.envelope,
+                     "pb_star": last["pb_star"], "feasible": last["feasible"], "gap": last["gap"],
+                     "breach": bool(last["breach"]), "triggered": bool(last["triggered"])})
+    return pd.DataFrame(rows).set_index("as_of")
+
+
+def compare_realtime_final(realtime: pd.DataFrame, final: pd.DataFrame) -> pd.DataFrame:
+    """Align the real-time table (from ``evaluate_history_realtime``) with the
+    hindsight table (from ``evaluate_history`` on the latest vintage) by
+    observation date. Returns triggered_realtime, triggered_final, agree."""
+    rt = realtime.set_index("date")[["breach", "triggered", "feasible"]].add_suffix("_realtime")
+    fn = final[["breach", "triggered", "feasible"]].add_suffix("_final")
+    out = rt.join(fn, how="inner")
+    out["agree"] = out["triggered_realtime"] == out["triggered_final"]
+    return out

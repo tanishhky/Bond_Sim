@@ -25,3 +25,14 @@ decision 0005.
 **Alternatives rejected.** Quarterly grid (loses auction and employment
 timing); daily grid (no fiscal data exists at that frequency; 20x the memory
 for no information).
+
+**Survives, with one correction (steelman review, 2026-09-17, see
+`steelman-log.md`).** "Interpolation manufactures a path that was never
+observed" is a false dichotomy: forward-fill also manufactures an unobserved
+path (a step at each quarter boundary), and decision 0006 records that step
+producing spurious r > g months until growth was smoothed. The grid choice
+is fine because every quantity the trigger compares is trailing-12-month
+smoothed, which is what makes the fill method invisible to the test. Replace
+the "no data is invented" rationale with that argument, and run the one-line
+sensitivity (linear or Chow-Lin interpolation of g in place of forward-fill)
+to show P(trigger) is unchanged.

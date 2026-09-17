@@ -44,3 +44,14 @@ chosen.
 **Validation.** The trigger is applied to history first (`evaluate_history`)
 so the notebook shows which quarters since 1980 would have flagged and
 whether they correspond to anything real.
+
+**⚠️ Open question (steelman review, 2026-09-17, see `steelman-log.md`).**
+`trigger_persistence_months` is well-supported as defining when the bad
+equilibrium becomes *reachable* (a fundamentals question). Whether it's also
+being used as a proxy for when a crisis actually *fires* is a distinct claim
+the self-fulfilling-crisis literature doesn't support, real crisis timing is
+described as belief/coordination-driven with "wide latitude" relative to
+fundamentals (Aguiar-Chatterjee-Cole-Stangebye 2016). Check whether either
+macro block carries a belief-shock layer on top of the identity trigger, or
+whether firing is purely persistence-gated, before treating the trigger's
+output as a crisis-timing prediction rather than a reachability condition.
