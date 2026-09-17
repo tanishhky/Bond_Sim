@@ -9,7 +9,11 @@ then, and records what the trigger said. Compares with the hindsight table
     data_cache/realtime_backtest_cmp.csv     aligned real-time vs hindsight flags
     docs/realtime_trigger_backtest.md        the summary the paper needs
 
-Usage: .venv/bin/python scripts/realtime_backtest.py [start] [end]
+Usage: .venv/bin/python scripts/realtime_backtest.py [start] [end] [benchmark]
+       benchmark: envelope | reaction | min (default: the config's feasible_benchmark).
+       A non-default benchmark writes to *_<benchmark>.md / .csv instead. The reaction
+       function is re-estimated on each as-of history, so it needs a minimum sample
+       (40 quarters) before its rows start.
 """
 import sys
 import time
@@ -32,7 +36,9 @@ FIRST_TRUE_GDP_VINTAGE = "1991-12-04"   # ALFRED starts tracking GDP here; earli
 def main():
     cfg = cfgmod.load()
     dl = cfg.doomloop
-    which = dl.feasible_benchmark
+    which = sys.argv[3] if len(sys.argv) > 3 else dl.feasible_benchmark
+    suffix = "" if which == dl.feasible_benchmark else f"_{which}"
+    min_obs = 2 if which == "envelope" else 40
     dates = pd.date_range(START, END, freq="QS")
     t0 = time.time()
     n = [0]
@@ -46,13 +52,13 @@ def main():
     rt = evaluate_history_realtime(history_fn, dates, n_quarters=4, which=which,
                                    require_r_gt_g=dl.trigger_require_r_gt_g,
                                    growth_smoothing_quarters=max(dl.trigger_growth_smoothing_months // 3, 1),
-                                   quantile=dl.feasible_quantile, fit_reaction=(which != "envelope"))
-    H_final, feas_final, h_final = history_sustainability(load_context(dates[-1]), n_quarters=4)
+                                   quantile=dl.feasible_quantile, fit_reaction=(which != "envelope"), min_obs=min_obs)
+    H_final, feas_final, h_final = history_sustainability(load_context(dates[-1]), n_quarters=4, which=which)
     cmp = compare_realtime_final(rt, H_final)
 
     (ROOT / "data_cache").mkdir(exist_ok=True)
-    rt.to_csv(ROOT / "data_cache" / "realtime_backtest_rt.csv")
-    cmp.to_csv(ROOT / "data_cache" / "realtime_backtest_cmp.csv")
+    rt.to_csv(ROOT / "data_cache" / f"realtime_backtest_rt{suffix}.csv")
+    cmp.to_csv(ROOT / "data_cache" / f"realtime_backtest_cmp{suffix}.csv")
 
     rt["lag_quarters"] = ((rt.index.year - rt["date"].dt.year) * 4 + (rt.index.quarter - rt["date"].dt.quarter))
     pre = rt.index < pd.Timestamp(FIRST_TRUE_GDP_VINTAGE)
@@ -107,9 +113,9 @@ def main():
         lines.append(t.round(4).to_markdown())
     else:
         lines.append("None.")
-    (ROOT / "docs" / "realtime_trigger_backtest.md").write_text("\n".join(lines) + "\n")
+    (ROOT / "docs" / f"realtime_trigger_backtest{suffix}.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines[:16]))
-    print(f"\nwritten: docs/realtime_trigger_backtest.md, data_cache/realtime_backtest_*.csv")
+    print(f"\nwritten: docs/realtime_trigger_backtest{suffix}.md, data_cache/realtime_backtest_*{suffix}.csv")
 
 
 if __name__ == "__main__":

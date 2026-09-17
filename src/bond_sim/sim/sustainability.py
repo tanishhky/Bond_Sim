@@ -265,7 +265,7 @@ def evaluate_history(q: pd.DataFrame, feasible: FeasiblePB, n_quarters: int = 4,
 
 def evaluate_history_realtime(history_fn, as_of_dates, n_quarters: int = 4, which: str = "envelope",
                               require_r_gt_g: bool = True, growth_smoothing_quarters: int = 4,
-                              quantile: float = 1.0, fit_reaction: bool = False) -> pd.DataFrame:
+                              quantile: float = 1.0, fit_reaction: bool = False, min_obs: int = 2) -> pd.DataFrame:
     """The trigger as it would have read in real time.
 
     ``history_fn(as_of)`` must return the quarterly frame (d, r_eff, g_nom, pb,
@@ -282,7 +282,7 @@ def evaluate_history_realtime(history_fn, as_of_dates, n_quarters: int = 4, whic
     for t in pd.to_datetime(list(as_of_dates)):
         h = history_fn(t)
         h = h.loc[h.index <= t]
-        if len(h) < 2:
+        if len(h) < max(min_obs, 2):
             continue
         feas = FeasiblePB.from_history(h["pb"], h["d"], h["u"] if "u" in h else None,
                                        quantile=quantile, fit_reaction=fit_reaction)
