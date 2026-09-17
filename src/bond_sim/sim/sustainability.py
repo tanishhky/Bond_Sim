@@ -222,7 +222,12 @@ def evaluate_paths(d: np.ndarray, r: np.ndarray, g: np.ndarray, pb: np.ndarray, 
     d_lag = np.concatenate([d[:, :1], d[:, :-1]], axis=1)
     pb_star = stabilizing_primary_balance(d_lag, r, g)
     g_star = stabilizing_growth(d_lag, r, pb)
-    feas = feasible.evaluate(d_lag, u, which=which)
+    if which == "actual":
+        # the path's own stance: trailing primary balance over the growth window, so a
+        # breach reads "explosive under the policy the path is actually running"
+        feas = trailing_mean(np.asarray(pb, float), growth_smoothing)
+    else:
+        feas = feasible.evaluate(d_lag, u, which=which)
     gap = pb_star - feas
     breach = gap > 0
     if require_r_gt_g:

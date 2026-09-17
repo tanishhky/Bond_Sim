@@ -95,7 +95,7 @@ class DoomLoopConfig:
     risk_premium: RiskPremiumConfig = field(default_factory=RiskPremiumConfig)
     # Identity-based trigger (math.md 4): pb* above feasible pb for this many months.
     trigger_persistence_months: int = 12
-    feasible_benchmark: str = "envelope"    # envelope | reaction | min
+    feasible_benchmark: str = "actual"      # actual | envelope | reaction | min (actual = trailing pb, 2026-09-17)
     feasible_quantile: float = 0.9          # envelope = this quantile of the historical primary balance (1.0 = the single best quarter ever)
     trigger_require_r_gt_g: bool = True     # a breach counts only with a positive snowball (r > g): the explosive case
     trigger_growth_smoothing_months: int = 12   # growth enters the trigger as a trailing mean, like the effective rate

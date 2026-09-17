@@ -48,7 +48,7 @@ doomloop:
     threshold_debt_gdp_pct: 130.0 #                              TODO(Tanishk) P-02
     threshold_extra_bps_per_pct: 6.0
   trigger_persistence_months: 12  # identity trigger: pb* above feasible pb for this long              P-04
-  feasible_benchmark: envelope    # envelope | reaction | min                                          P-04
+  feasible_benchmark: actual      # actual | envelope | reaction | min; actual = trailing pb, "explosive under current policy" (2026-09-17 real-time backtest)  P-04
   feasible_quantile: 0.9          # envelope = this quantile of historical pb (1.0 = best quarter ever)  P-04
   trigger_require_r_gt_g: true    # breach counts only with r > g (explosive), not merely a rising ratio P-04
   trigger_growth_smoothing_months: 12   # growth as a trailing mean, like-for-like with the trailing effective rate  P-04

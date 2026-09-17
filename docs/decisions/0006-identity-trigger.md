@@ -38,9 +38,14 @@ reaction function is vintage-robust but fires through the 1996-2000
 surpluses, and a third benchmark added the same day, the actual trailing
 primary balance (`which="actual"` in `evaluate_history`, "explosive under
 current policy"), is vintage-robust over 1986-2026 and fires only in
-1986-1994 and 2009-2010. Recommendation on the table: `actual` as default,
-`reaction` for the debt limit, `envelope` as a sensitivity. `evaluate_paths`
-still needs the `actual` branch before the simulator can use it.
+1986-1994 and 2009-2010. **Adopted the same day (Tanishk's call):** `actual` is the default
+benchmark (`config/default.yaml`, PARAMETERS.md P-04), `reaction` defines
+the debt limit, `envelope` is a sensitivity. `evaluate_paths` carries the
+`actual` branch: on simulated paths the feasible balance is the path's own
+trailing primary balance, so P(trigger) reads "probability the simulated
+economy is on an explosive path under the stance it is actually running".
+Results in `docs/methodology.md` section 7 predate this switch and must be
+re-run.
 
 **Derivatives.** The first difference is decomposed into snowball, primary,
 and stock-flow residual every period. The second difference is decomposed
