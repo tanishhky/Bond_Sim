@@ -20,9 +20,14 @@ behavioral states:
    tails history has: non-normal by construction, and no distributional
    family is assumed.
 3. **Doom-loop channel.** The hazard of entering the stress state is
-   logistic in the financial-conditions factor (slope estimated on
-   history). The fiscal premium shifts that factor through the Baa-spread
-   loading (P-16). Fiscal stress tightens conditions and raises recession
+   logistic in the financial-conditions factor. The slope is a stated
+   view, not an estimate: on 1990-2026 the unrestricted estimate is
+   negative (the three stress entries were preceded by loose conditions),
+   a >= 0 sign restriction is imposed, and the channel is off by default
+   and swept in notebook 05 (P-19; three events cannot identify a hazard).
+   The fiscal premium shifts the factor through the Baa-spread loading
+   (P-16) and reaches activity through the estimated cross-block dynamics
+   even with the hazard off. Fiscal stress tightens conditions and raises recession
    risk; that is the state-space form of the loop.
 4. **Shocks.** Forced transitions (recession now) and factor impulses (rate
    spike, foreign-demand withdrawal, consumer retrenchment) are dated
@@ -59,14 +64,14 @@ supports 2-3 latent states with a persistence prior, not a per-block joint
 chain. Results are reported at 2 and 3 states (P-17).
 
 **⚠️ Needs revision (steelman review, 2026-09-17, see `steelman-log.md`).**
-Item 3 above says the stress hazard slope is "estimated on history";
+Item 3 originally said the stress hazard slope was "estimated on history";
 PARAMETERS.md P-19 says the unrestricted estimate is negative, a >= 0
 restriction is imposed, the channel is off by default, and "three events
-cannot identify a hazard". P-19 is right; fix the wording here and in the
-paper: the loop channel in the state block is a stated prior, currently zero,
-swept in notebook 05 (cf. Conesa & Kehoe 2015 fixing the panic probability
-and calling it arbitrary; Wakimoto 2026 on set-valued regime inference with
-few transitions). Also: rejection is a selection rule, so report "triggered
+cannot identify a hazard". P-19 is right; item 3 was reworded the same day
+to match it. The paper must say the same: the loop channel in the state
+block is a stated prior, currently zero, swept in notebook 05 (cf. Conesa &
+Kehoe 2015 fixing the panic probability and calling it arbitrary; Wakimoto
+2026 on set-valued regime inference with few transitions). Also: rejection is a selection rule, so report "triggered
 and rejected" per scenario alongside admissibility, so P(trigger) is
 bracketed rather than conditional on survival; and state that the stress
 residual bank is 44 quarters.

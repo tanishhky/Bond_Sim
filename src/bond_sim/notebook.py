@@ -195,7 +195,8 @@ def summary_table(runs: Dict[tuple, object]) -> pd.DataFrame:
         row = r.summary()
         row["shock"], row["policy"] = s, p
         rows.append(row)
-    cols = ["shock", "policy", "block", "admissible_share", "P(trigger)", "P(trigger_threshold)", "median_years_to_trigger",
+    cols = ["shock", "policy", "block", "admissible_share", "P(trigger)", "P(trigger)_lo", "P(trigger)_hi",
+            "P(trigger_rejected)", "P(trigger_threshold)", "median_years_to_trigger",
             "median_end_debt_gdp", "median_end_r10", "median_end_u", "median_end_g_nom", "median_end_pb",
             "median_end_interest_12m_gdp", "median_end_r_eff"]
     df = pd.DataFrame(rows)

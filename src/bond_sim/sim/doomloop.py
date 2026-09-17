@@ -88,9 +88,17 @@ class SimResult:
         end = {k: (float(np.nanmedian(v[ok, -1])) if ok.any() and np.isfinite(v[ok, -1]).any() else np.nan)
                for k, v in self.paths.items()}
         p_id, p_th = self.trigger_probability("identity"), self.trigger_probability("threshold")
+        # Rejection is a selection rule, so P(trigger) above is P(trigger | admissible). The
+        # bracket below bounds the unconditional probability: rejected paths counted as
+        # never triggered (lo) or all triggered (hi); the joint share says how many of the
+        # rejected paths had in fact triggered before they were rejected (decision 0007).
+        trig = self.trigger_month >= 0
+        p_lo = float((trig & ok).mean())
         return pd.Series({"policy": self.policy, "block": self.block_desc, "premium": self.premium_desc,
                           "admissible_share": float(ok.mean()),
                           "P(trigger)": p_id, "P(trigger_threshold)": p_th,
+                          "P(trigger_rejected)": float((trig & ~ok).mean()),
+                          "P(trigger)_lo": p_lo, "P(trigger)_hi": p_lo + float((~ok).mean()),
                           "median_years_to_trigger": float(self.time_to_trigger_years().median()) if p_id else np.nan,
                           **{f"median_end_{k}": v for k, v in end.items()}})
 

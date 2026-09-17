@@ -108,6 +108,8 @@ Six entries, one pass. Verdicts: 0001 Survives; 0002, 0003, 0005, 0007 Needs rev
 
 **Citations:** PARAMETERS.md P-19; Wakimoto (2026, JFR-rg Part II); Conesa & Kehoe (2015); Aguiar, Chatterjee, Cole & Stangebye (2016); Gourinchas & Obstfeld (2011).
 
+**Follow-ups done (2026-09-17):** (1) decision 0007 item 3 reworded to match P-19; (3) `SimResult.summary()` now reports `P(trigger_rejected)`, `P(trigger)_lo`, `P(trigger)_hi` and `summary_table` shows them, so every scenario's P(trigger) is bracketed rather than conditional on survival. (2) and (4) remain open.
+
 ---
 
 ## 2026-09-17: Trigger persistence (P-04 / 0006-identity-trigger), NEEDS REVISION
