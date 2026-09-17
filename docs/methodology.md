@@ -204,3 +204,54 @@ probability is a property of the P-04 thresholds. The no-layoff mandate's
 debt path is the placeholder growth penalty (P-06) compounding for thirty
 years. Monetization's unemployment floor is the missing inflation variable
 (P-15), not a result.
+
+## 8. Run under the actual-stance benchmark (2026-09-17, both blocks, identity trigger)
+
+The first run after the trigger benchmark switched from the primary-balance
+envelope to the actual trailing primary balance (decision 0006, P-04; the
+real-time backtest in `realtime_trigger_backtest*.md` is why). Notebooks
+00-07 regenerated and executed end to end, K = 1,000 paths (the paper will
+use `sim.n_paths` = 5,000), 30 years, r > g required, 12-month persistence,
+placeholders P-01, P-06, P-15 and P-19 still in force. Every P(trigger) is
+P(trigger | admissible); the lo/hi bracket counts rejected paths as never /
+all triggered.
+
+| Scenario | Block | Admissible | P(trigger) | lo-hi | Median years to trigger | Median 2056 debt/GDP |
+|---|---|---|---|---|---|---|
+| status quo | VAR | 1.000 | 0.964 | | 7.5 | 148% |
+| status quo | states | 0.996 | 0.971 | 0.967-0.971 | 6.3 | 121% |
+| no-layoff mandate | VAR | 0.993 | 1.000 | | 4.0 | 298% |
+| no-layoff mandate | states | 0.996 | 0.976 | 0.972-0.976 | 6.2 | 124% |
+| austerity | VAR | 1.000 | 0.825 | | 4.8 | 33% |
+| austerity | states | 0.989 | 0.414 | 0.409-0.420 | 2.8 | 20% |
+| monetization | VAR | 0.826 | 0.235 | 0.19-0.37 | 22.8 | 23% |
+| monetization | states | 0.996 | 0.491 | 0.489-0.493 | 14.2 | 78% |
+| growth-led | VAR | 1.000 | 0.812 | | 11.8 | 103% |
+| growth-led | states | 0.996 | 0.902 | 0.898-0.902 | 8.5 | 107% |
+
+Shocks (states block): recession now raises the status quo to 0.984 and
+austerity to 0.585; a rate spike as sized triggers on every path under every
+policy. Starting austerity 5 or 10 years late moves it from 0.41 to 0.68 and
+0.84; growth-led from 0.90 to 0.92 and 0.94. Persistence remains the free
+parameter that matters most: 6 / 12 / 24 months give 0.998 / 0.964 / 0.467
+(VAR) and 0.998 / 0.971 / 0.578 (states); without the r > g requirement the
+probability is 1 at every window.
+
+**Reading.** Under a benchmark that measures the path's own stance, the
+status-quo probability of spending some 12-month stretch on an explosive
+path within 30 years is near-certain for both blocks. The earlier 0.60 / 0.58
+(envelope, same run: 0.603 / 0.584) was the envelope's history-dependence,
+not a probability: it asked whether pb* ever exceeded a 2.2%-of-GDP surplus,
+a bar the simulated deficits never approach. Three consequences. (i) The
+headline statistic should not be "ever triggered": report the time to
+entry, the share of quarters in breach, and P(entered by year t) curves.
+(ii) P(trigger) is reachability, not crisis; whether a reachable path fires
+is the belief/coordination question the model does not yet carry (0006
+review), and the 1986-96 real-time episode shows reachable paths that never
+fired. (iii) The policy ordering survives the switch (austerity and
+monetization cut the probability roughly in half in the state block; growth
+alone barely moves it), but the VAR block's monetization row rejects 17% of
+paths and is not a result until P-15. The two blocks now agree on the status
+quo (0.96 vs 0.97) and disagree most on austerity (0.83 vs 0.41), which is
+the state block's estimated stress dynamics doing the work, worth a
+dedicated look before the paper leans on it.

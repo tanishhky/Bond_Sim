@@ -461,7 +461,7 @@ rows = []
 for rg in (0.0, 0.01, 0.02):
     for name, prem in prem_models:
         r_of_d = lambda x, p=prem, rg=rg: g_now + rg + float(p.premium(np.array([100 * x]))[0]) / 100.0
-        for which in ("envelope", "reaction"):
+        for which in ("actual", "envelope", "reaction"):
             feas_w = FeasiblePB(envelope=feas.envelope, reaction=feas.reaction if which == "reaction" else None)
             if which == "envelope":
                 pbs = stabilizing_primary_balance(grid_d, np.array([r_of_d(x) for x in grid_d]), np.full_like(grid_d, g_now))
@@ -646,7 +646,7 @@ re-simulation needed).
 rows = []
 for n, r in runs.items():
     ok = r.admissible
-    for which in ("envelope", "reaction"):
+    for which in ("actual", "envelope", "reaction"):
         for require in (True, False):
             for months in (6, 12, 24):
                 diag = evaluate_paths(r.paths["debt_gdp"][ok] / 100, r.paths["r_eff"][ok] / 100, r.paths["g_nom"][ok] / 100, r.paths["pb"][ok] / 100,
