@@ -324,3 +324,23 @@ def panel_wide(panel: pd.DataFrame, grid: MonthlyGrid) -> pd.DataFrame:
     or beyond as_of). Use for correlation/regime analysis."""
     w = panel.pivot(index="date", columns="series_id", values="value")
     return w.reindex(grid.dates)
+
+
+def load_daily_series(series_ids: Iterable[str], *, as_of, client: Optional[FredClient] = None,
+                      observation_start: str = "1900-01-01") -> Dict[str, pd.Series]:
+    """Raw (unaggregated) as-of daily series, keyed by series id. Unlike
+    ``load_macro_panel`` this skips ``_to_monthly``: realized volatility needs
+    the actual daily observations, a monthly average of levels throws away
+    the within-month variation that IS the quantity being measured. Same
+    point-in-time contract as ``load_macro_panel``: nothing published after
+    ``as_of`` appears."""
+    client = client or FredClient()
+    vf = client.fetch_many(series_ids, observation_start)
+    known = vf.as_of(as_of)
+    out = {}
+    for sid, g in known.groupby("series_id"):
+        s = g.set_index("date")["value"].sort_index()
+        out[sid] = s[s.index <= pd.Timestamp(as_of)]
+    obs.event(channel="data", kind="daily_series", as_of=str(pd.Timestamp(as_of).date()),
+              n_series=len(out), n_rows=sum(len(s) for s in out.values()))
+    return out
