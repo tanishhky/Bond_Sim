@@ -123,6 +123,7 @@ SERIES: Dict[str, SeriesSpec] = {s.id: s for s in [
     SeriesSpec("NFCI", "Chicago Fed National Financial Conditions Index", "W", "Index", "financial", 6),
     SeriesSpec("BAA10Y", "Moody's Baa Corporate Yield Relative to 10-Year Treasury", "D", "%", "financial", 2),
     SeriesSpec("VIXCLS", "CBOE Volatility Index: VIX", "D", "Index", "financial", 2),
+    SeriesSpec("VXTYN", "CBOE 10-Year Treasury Note Volatility (TYVIX, discontinued 2020-05-15)", "D", "Index", "financial", 2),
     SeriesSpec("T10Y2Y", "10-Year Minus 2-Year Treasury Constant Maturity", "D", "%", "financial", 2),
     SeriesSpec("DRTSCILM", "Net Pct of Banks Tightening Standards for C&I Loans to Large Firms (SLOOS)", "Q", "%", "financial", 35),
     # prices (BLS CPI ~12-15 days; BEA PCE price ~30 days; Cleveland Fed median CPI same day as CPI)

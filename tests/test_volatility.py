@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bond_sim.analysis.volatility import realized_vol, monthly_realized_vol
+from bond_sim.analysis.volatility import realized_vol, monthly_realized_vol, variance_risk_premium
 from bond_sim.calendar import MonthlyGrid
 
 
@@ -46,6 +46,22 @@ def test_realized_vol_detects_a_real_vol_spike():
     calm = rv.iloc[100:140].mean()
     stressed = rv.iloc[150:170].mean()
     assert stressed > 3 * calm
+
+
+def test_variance_risk_premium_sign_and_intersection():
+    idx = pd.date_range("2010-01-01", periods=10, freq="QS")
+    implied = pd.Series(5.0, index=idx)
+    realized = pd.Series(3.0, index=idx[2:])   # shorter, offset series
+    vrp = variance_risk_premium(implied, realized)
+    assert len(vrp) == len(idx) - 2
+    assert (vrp == 2.0).all()
+
+
+def test_variance_risk_premium_raises_on_no_overlap():
+    a = pd.Series([1.0], index=pd.to_datetime(["2010-01-01"]))
+    b = pd.Series([1.0], index=pd.to_datetime(["2020-01-01"]))
+    with pytest.raises(ValueError):
+        variance_risk_premium(a, b)
 
 
 def test_monthly_realized_vol_aligns_to_grid_month_starts():
