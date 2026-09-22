@@ -26,14 +26,30 @@ from .states import Draws, LatentStateModel
 
 
 class VARBlock:
-    def __init__(self, var: MacroVAR):
+    def __init__(self, var: MacroVAR, transmission: str = "var", credit_elasticity: float = -0.006):
+        """``transmission``: "var" (default, the VAR's own lagged-10y
+        coefficients) or "credit" (Arellano-Bai-Bocola/Bocola-calibrated
+        sovereign-risk pass-through, decision 0005, P-20). ``credit_elasticity``
+        only matters when ``transmission="credit"``; pass the low/central/high
+        values from MacroVAR.credit_channel_transmission's docstring to run
+        the band, not just one point."""
+        if transmission not in ("var", "credit"):
+            raise ValueError(f"unknown transmission {transmission!r}")
         self.var = var
+        self.transmission = transmission
+        self.credit_elasticity = credit_elasticity
         self.i = {v: var.index_of(v) for v in VARS}
         self.hist = None
         self.u_prev = None
 
+    def _transmit(self, d_prem: np.ndarray) -> np.ndarray:
+        if self.transmission == "credit":
+            return self.var.credit_channel_transmission(d_prem, output_elasticity=self.credit_elasticity)
+        return self.var.rate_transmission(d_prem)
+
     def describe(self) -> str:
-        return f"levels VAR({self.var.lag}), Gaussian shocks"
+        chan = "VAR-own-coefficients" if self.transmission == "var" else f"credit-channel ({self.credit_elasticity})"
+        return f"levels VAR({self.var.lag}), Gaussian shocks, {chan} transmission"
 
     def prepare(self, K: int, HQ: int, rng: np.random.Generator) -> np.ndarray:
         return self.var.draw_shocks(K, HQ, rng)
@@ -45,7 +61,7 @@ class VARBlock:
 
     def advance(self, tq: int, draws: np.ndarray, d_prem: np.ndarray, policy, ctx: dict) -> Dict[str, np.ndarray]:
         i = self.i
-        y = self.var.step(self.hist, draws[:, tq, :], self.var.rate_transmission(d_prem))
+        y = self.var.step(self.hist, draws[:, tq, :], self._transmit(d_prem))
         # effective lower bound on nominal yields: the one structural floor (cash exists)
         y[:, i["r10"]] = np.maximum(y[:, i["r10"]], 0.0)
         y[:, i["r3m"]] = np.maximum(y[:, i["r3m"]], 0.0)

@@ -210,6 +210,39 @@ class MacroVAR:
             col[self.index_of(r)] = 0.0
         return np.outer(np.asarray(delta_r10, float), col)
 
+    def credit_channel_transmission(self, delta_r10: np.ndarray, output_elasticity: float = -0.006,
+                                    okun_coefficient: float = 0.4, u_ref: float = 5.0) -> np.ndarray:
+        """Alternative to ``rate_transmission`` (decision 0005, P-20): transmits
+        the premium through a sovereign-risk pass-through elasticity from the
+        literature instead of the VAR's own 1985-2026 lagged-10y coefficients,
+        which were estimated on a sample with essentially no US sovereign-risk
+        variation, a Fed-hike-shaped channel, not a sovereign-risk-shaped one
+        (2026-09-17 steelman review of decision 0005).
+
+        ``output_elasticity``: pp of annualized output growth per pp (100bp)
+        of premium. Default -0.006 is Arellano, Bai & Bocola's (2017) central
+        estimate: sovereign risk explained ~30% of Italy's 6.4pp 2012 output
+        decline against a ~3.1pp average spread rise over 2011-2013 (their
+        Table 7). Their own sensitivity range is 10%-50% attribution, call
+        with output_elasticity in roughly [-0.002, -0.010] for a low/high
+        case, not just the central one; never report only the point estimate.
+
+        ``okun_coefficient``, ``u_ref``: the growth shock is converted to an
+        unemployment response via a standard Okun's-law coefficient (~0.4),
+        linearized around ``u_ref`` percent since the VAR carries log(u) and
+        Okun's law is stated in levels. This piece is NOT sourced from the
+        sovereign-risk papers, a standard macro rule of thumb standing in for
+        a channel Bocola/Arellano-Bai-Bocola don't directly estimate,
+        flagged as such rather than presented as equally well-grounded.
+        ``pb`` and ``infl`` are left at zero, same as ``rate_transmission``."""
+        d = np.asarray(delta_r10, float)
+        g_shock = output_elasticity * d
+        d_log_u = -okun_coefficient * g_shock / u_ref
+        out = np.zeros((len(d), len(VARS)))
+        out[:, self.index_of("g_nom")] = g_shock
+        out[:, self.index_of("u")] = d_log_u
+        return out
+
     def simulate(self, K: int, H: int, rng: np.random.Generator, init: Optional[np.ndarray] = None,
                  shocks: Optional[np.ndarray] = None, exog: Optional[np.ndarray] = None) -> np.ndarray:
         """Unconditional (K, H, V) simulation, useful for validating the VAR

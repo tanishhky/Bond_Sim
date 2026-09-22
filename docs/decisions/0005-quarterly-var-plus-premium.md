@@ -75,6 +75,27 @@ unemployment equations through the VAR's own estimated coefficients on the
 lagged 10y (`MacroVAR.rate_transmission`). The issuance yield is a
 bill/coupon blend at the stock's bill share.
 
+**Premium transmission, two calibrated options (added 2026-09-21, P-20).**
+`VARBlock` now takes `transmission="var"` (the paragraph above, kept as
+default) or `transmission="credit"`
+(`MacroVAR.credit_channel_transmission`), which instead transmits the
+premium through Arellano-Bai-Bocola (2017)/Bocola (2016)'s estimated
+sovereign-spread-to-output pass-through: central -0.006 pp of annualized
+growth per 100bp of premium, with their own attribution sensitivity (10%-
+50% of Italy's 2012 output decline) implying a band of roughly -0.002 to
+-0.010, converted to unemployment via a standard Okun's-law coefficient
+(0.4, not itself sourced from the sovereign-risk papers, flagged
+separately in the docstring). This resolves the steelman finding below by
+making the assumption explicit and swappable rather than fixing it: the
+paper reports both channels, run at identical draws so only the
+transmission differs, and does not assert which is harsher a priori. On
+the synthetic fixture used in `tests/test_credit_channel.py` the "var"
+channel is in fact the harsher one, because that fixture's hand-built
+r10->g_nom coefficient (-0.4) is far larger than the credit channel's
+-0.006; this is a property of that fixture's calibration, not evidence
+about the real fitted VAR, and the real ordering is an empirical question
+for the notebook comparison, not something decided here.
+
 **Seasonality.** The MTS deficit is not seasonally adjusted (April is a
 surplus month every year). The primary balance in the state is therefore a
 trailing-four-quarter ratio, and the initial growth rate is a
@@ -86,16 +107,41 @@ interest/receipts trigger is the last 12 months of MTS receipts over SAAR
 GDP, held fixed over the horizon (P-04). Each is a documented extension
 rather than a hidden assumption.
 
-**⚠️ Needs revision (steelman review, 2026-09-17, see `steelman-log.md`).**
-`rate_transmission` pushes the fiscal premium through coefficients estimated
-on 1985-2026 10y moves, which were monetary-policy and term-premium driven,
-not sovereign-risk driven; the regime being simulated is absent from the
-estimation sample (Lucas critique). The sovereign-risk literature transmits
-through bank balance sheets and credit spreads with non-proportional
-magnitudes (Bocola 2016: +60bp firm financing premia, output -1.4% at peak;
-Corsetti & Dedola 2016). "The empirical content of 'the loop hurts the real
-economy'" is the empirical content of "a Fed hike hurts the real economy",
-relabeled. Fix: state it as an assumption; add a Bocola-calibrated
-credit-channel transmission option reported side by side; note that the VAR
-vs state-block gap is a transmission-channel difference as well as a
-distributional one (the state block uses the Baa loading, P-16).
+**⚠️ Steelman review, 2026-09-17, see `steelman-log.md` — partially resolved
+2026-09-21.** `rate_transmission` pushes the fiscal premium through
+coefficients estimated on 1985-2026 10y moves, which were monetary-policy
+and term-premium driven, not sovereign-risk driven; the regime being
+simulated is absent from the estimation sample (Lucas critique). The
+sovereign-risk literature transmits through bank balance sheets and credit
+spreads with non-proportional magnitudes (Bocola 2016: +60bp firm financing
+premia, output -1.4% at peak; Corsetti & Dedola 2016). "The empirical
+content of 'the loop hurts the real economy'" is the empirical content of
+"a Fed hike hurts the real economy", relabeled. **Built:** the
+Bocola-calibrated credit-channel option above (P-20), reported side by
+side rather than replacing `rate_transmission`; and the side-by-side
+comparison itself, `scripts/premium_transmission_comparison.py`
+(`docs/premium_transmission_comparison_findings.md`), run on the real
+fitted VAR (not the synthetic test fixture) at two premium slopes.
+**Finding:** the two channels' *instantaneous* coefficients differ by
+~94x on the real data (var's g_nom coefficient -0.56 per 100bp of premium
+*change* vs credit-central's -0.006); the synthetic test fixture agrees in
+this ordering (its hand-built coefficient is -0.386, also far larger than
+credit's -0.006), so `rate_transmission` reads as dramatically harsher
+*instantaneously* on both. But the *simulated* 30-year outcomes are close
+at the default P-01 slope (terminal debt/GDP differs by only 0.36pp of
+GDP) because
+`rate_transmission` acts on the small quarterly premium *change*, not its
+level, and the VAR's own mean reversion unwinds most of each shock before
+it compounds. At 2.5x the default P-01 slope the gap widens to ~2.0pp of
+GDP but stays modest relative to the ~170pp GDP level itself. Provisional
+reading: this model's debt trajectories are driven more by the mechanical
+interest-cost/debt-service channel than by either growth-transmission
+channel, which is itself a claim the paper should state explicitly rather
+than assume. **Still open:** the VAR-vs-state-block transmission-channel
+gap noted here (state block uses the Baa loading, P-16) is still
+undocumented as its own comparison; the kinked/threshold premium form
+(P-02), which concentrates larger quarterly premium changes at high
+debt/GDP, has not been run through this comparison and is where channel
+choice would plausibly matter most. Which channel is the paper's headline
+result, or whether both are reported as a band, is an editorial decision
+not yet made.
