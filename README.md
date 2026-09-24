@@ -1,5 +1,7 @@
 # Bond_Sim
 
+> **Working notes, not findings.** Numbers in `docs/`, the notebooks and the decision records come from runs under placeholder parameters and design choices that are still under review. None of them is a published or validated result. Validated results are released separately, once they have passed review.
+
 **Central question:** how likely is the US actually hitting a sovereign-debt
 doom loop (debt growth pushes rates up, higher rates push debt service and
 future debt growth up further), what stops it, who gets hurt if it is not
