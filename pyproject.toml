@@ -16,6 +16,7 @@ dependencies = [
     "pyyaml>=6.0",
     "pyarrow>=14.0",
     "hmmlearn>=0.3",
+    "matplotlib>=3.7",
 ]
 
 [project.optional-dependencies]

@@ -6,6 +6,7 @@
     bond_sim simulate   fit the macro VAR, run every policy under common random numbers,
                         map paths to sector employment, measure recovery half-lives
     bond_sim all        the four above in order
+    bond_sim figures    list / build the signature figures (thesis charter A9); build F-## [--draft]
 
 Artifacts land in runs/<config_hash>/ as CSV/NPY plus a JSONL event log.
 """
@@ -240,6 +241,23 @@ def cmd_simulate(cfg, args):
     print(f"artifacts: {out}")
 
 
+def cmd_figures(cfg, args):
+    from . import figures
+    from .figures.publish import OUT
+    if args.action == "list":
+        if not figures.FIGURES and not list(OUT.glob("F-*")):
+            print("no figures yet: prototypes live in notebooks until a figure passes its stress test")
+        for fid in sorted(set(figures.FIGURES) | {p.name for p in OUT.glob("F-*")}):
+            versions = sorted(p.name for p in (OUT / fid).glob("v*"))
+            print(f"{fid:6s} builder={'yes' if fid in figures.FIGURES else 'no'}  versions={', '.join(versions) or '-'}")
+        return
+    builder = figures.FIGURES.get(args.id)
+    if builder is None:
+        raise SystemExit(f"{args.id}: no builder registered; prototypes stay in notebooks until the stress test passes (charter A9)")
+    spec, draw, data, run_meta = builder(cfg, args)
+    print(figures.publish(spec, draw, data, run_meta, renders=args.renders, draft=args.draft))
+
+
 def main(argv=None) -> int:
     import warnings
     # numpy on macOS Accelerate emits spurious "encountered in matmul" RuntimeWarnings for
@@ -257,6 +275,9 @@ def main(argv=None) -> int:
     a.add_argument("--all-pairs", dest="thesis", action="store_false", help="include same-group pairs")
     s = sub.add_parser("simulate"); s.add_argument("--paths", type=int); s.add_argument("--policies", nargs="*"); s.add_argument("--var-start", default=None)
     sub.add_parser("all")
+    f = sub.add_parser("figures"); f.add_argument("action", choices=["list", "build"]); f.add_argument("id", nargs="?")
+    f.add_argument("--draft", action="store_true", help="write to figures/_draft/, skip the clean-tree check")
+    f.add_argument("--renders", nargs="*", default=["paper", "slide"], choices=["paper", "slide", "social"])
     args = p.parse_args(argv)
     cfg = cfgmod.load(args.config)
     if args.cmd == "all":

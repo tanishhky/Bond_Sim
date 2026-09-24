@@ -9,3 +9,4 @@ runs/
 *.ipynb_checkpoints/
 data_cache/
 *.parquet
+figures/_draft/
