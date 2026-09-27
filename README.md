@@ -21,7 +21,7 @@ of the configuration that produced it.
 ```bash
 /usr/bin/python3 -m venv .venv && ./.venv/bin/pip install -e ".[dev,regimes]"
 cp .env.example .env               # FRED_API_KEY=...  (free key from fred.stlouisfed.org)
-./.venv/bin/python -m pytest        # 23 tests incl. the no-lookahead invariance test
+./.venv/bin/python -m pytest        # 48 tests incl. the no-lookahead invariance test
 ./.venv/bin/jupyter lab notebooks   # open 00_index.ipynb and go phase by phase
 ```
 
@@ -113,7 +113,7 @@ are chunked; ALFRED vintages begin 1991 (GDP) and 2005 (DGS10).
 | 5 | Correlated labor and industry shocks: sector betas on (d_u, d_r10) with residual covariance | built; notebook 07 |
 | 6 | Policy counterfactuals and shocks under common random numbers: five policies x four shocks; act now vs later | built; notebook 06; every magnitude is P-06..P-09 |
 | 7 | Recovery duration: half-lives from five US episodes and from simulated paths | built; notebook 07 |
-| 8 | Tests: toy pins, calendar, no-lookahead invariance, sustainability identity, latent chain, sim smoke | 23 passing |
+| 8 | Tests: toy pins, calendar, no-lookahead invariance, sustainability identity, latent chain, sim smoke | 48 passing |
 | 9 | Paper: real data, assumptions separated from findings, in-repo `paper/` | not started |
 
 Everything a human must decide is in `PARAMETERS.md` (P-01..P-18) with its
